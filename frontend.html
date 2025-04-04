@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quiz Generator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+            display: inline-block;
+            color: black;
+            width: 60%;
+        }
+        h1 {
+            font-size: 30px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            background: #ff6f61;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #e65145;
+        }
+        input[type="file"] {
+            font-size: 16px;
+            padding: 8px;
+        }
+        label {
+            font-size: 18px;
+            margin: 10px;
+        }
+        #output {
+            margin-top: 20px;
+            text-align: left;
+            font-size: 18px;
+            color: black;
+        }
+        .question {
+            background: #ffeb3b;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .answer {
+            background: #dcedc8;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload PDF and Generate Questions</h1>
+    <p>Learn easily with AI-generated quizzes!</p>
+    <div class="container">
+        <input type="file" id="pdfFile" accept="application/pdf">
+        <br><br>
+        <label>
+            <input type="radio" name="questionType" value="mcq" checked> MCQs
+        </label>
+        <label>
+            <input type="radio" name="questionType" value="theory"> Theoretical Questions
+        </label>
+        <br><br>
+        <button onclick="uploadPDF()">Generate Questions</button>
+        <h2>Generated Questions:</h2>
+        <div id="output"></div>
+    </div>
+
+    
+        <script>
+    async function uploadPDF() {
+        const fileInput = document.getElementById("pdfFile");
+        const questionType = document.querySelector('input[name="questionType"]:checked').value;
+        const outputDiv = document.getElementById("output");
+        outputDiv.innerHTML = "<strong>Generating questions... Please wait.</strong>";
+
+        if (fileInput.files.length === 0) {
+            outputDiv.innerHTML = "<strong style='color: red;'>Please select a PDF file.</strong>";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/upload", {
+                method: "POST",
+                body: formData,
+                headers: { "Accept": "application/json" }
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to generate questions.");
+            }
+
+            const data = await response.json();
+            outputDiv.innerHTML = "";
+
+            if (questionType === "mcq") {
+                data.mcqs.forEach(q => {
+                    outputDiv.innerHTML += `<p class='question'>${q.question}</p>`;
+                    q.options.forEach(opt => {
+                        outputDiv.innerHTML += `<p>- ${opt}</p>`;
+                    });
+                    outputDiv.innerHTML += `<p class='answer'>Answer: ${q.answer}</p>`;
+                });
+            } else {
+                data.theoretical_questions.forEach(q => {
+                    outputDiv.innerHTML += `<p class='question'>${q}</p>`;
+                });
+            }
+        } catch (error) {
+            outputDiv.innerHTML = "<strong style='color: red;'>Error connecting to server.</strong>";
+        }
+    }
+</script>
+
+    
+</body>
+</html>
